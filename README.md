@@ -51,7 +51,7 @@ for l.Scan() {
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/zoer/xmlable.
+Bug reports and pull requests are welcome on GitHub at https://github.com/zoer/lexer.
 
 
 ## License

@@ -1,8 +1,14 @@
+// Lexer package provides an ability to tokenize text.
 package lexer
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
+)
+
+const (
+	cantMatchErrorMessage = `Can't match any existed matchers for the following text: %q`
 )
 
 // Lexer contains the input text and token matchers.
@@ -34,8 +40,8 @@ func NewLexer(text string) *Lexer {
 //
 //   text := `text which need to be tokenized`
 //   l := NewLexerWithMatchers(text, []TokenMatchers{
-//     TokenizeIfMatches(`\d+`, "DIGIT")
-//     SkipIfMatches(`\s+`)
+//     TokenizeIfMatches(`\d+`, "DIGIT"),
+//     SkipIfMatches(`\s+`),
 //   })
 func NewLexerWithMatchers(text string, matchers []TokenMatcher) *Lexer {
 	l := NewLexer(text)
@@ -85,8 +91,7 @@ F:
 		return l.Scan()
 	} else {
 		if len(l.currentInput) > 0 {
-			l.Error = errors.New("Can't match any existed matchers for the following text: " +
-				string(l.currentInput))
+			l.Error = errors.New(fmt.Sprintf(cantMatchErrorMessage, string(l.currentInput)))
 		}
 		return false
 	}

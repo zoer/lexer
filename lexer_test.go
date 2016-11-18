@@ -9,6 +9,12 @@ import (
 	"github.com/zoer/lexer"
 )
 
+type testData struct {
+	text     string
+	matchers []lexer.TokenMatcher
+	tokens   [][]string
+}
+
 func TestLexer_NewLexer(t *testing.T) {
 	assert := assert.New(t)
 	text := `foo`
@@ -38,73 +44,63 @@ func TestLexer_AddMatcher(t *testing.T) {
 }
 
 func TestLexer_Scan(t *testing.T) {
-	assert := assert.New(t)
+	d := []testData{
+		testData{
+			`IP is 127.0.0.1`,
+			[]lexer.TokenMatcher{
+				lexer.SkipIfMatches(`\s+`),
+				lexer.TokenizeIfMatches(`(?i)[a-z]+`, `WORD`),
+				lexer.TokenizeIfMatches(`\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}`, `IP`),
+				lexer.TokenizeIfMatches(`\d+`, `DIGIT`),
+			},
+			[][]string{
+				[]string{`IP`, `WORD`},
+				[]string{`is`, `WORD`},
+				[]string{`127.0.0.1`, `IP`},
+			},
+		},
+		testData{
+			`price $12.4 foo`,
+			[]lexer.TokenMatcher{
+				lexer.SkipIfMatches(`\s+`),
+				lexer.TokenizeIfMatches(`\w+`, "WORD"),
+				func(input []byte) (matched bool, shift int, tokenName interface{}, tokenText []byte) {
+					re := regexp.MustCompile(`^\$(\d+(?:\.\d+))`)
+					match := re.FindSubmatch(input)
+					if match == nil {
+						return
+					}
+					return true, len(match[0]), "PRICE", match[1]
+				},
+			},
+			[][]string{
+				[]string{`price`, `WORD`},
+				[]string{`12.4`, `PRICE`},
+				[]string{`foo`, `WORD`},
+			},
+		},
+	}
 
-	l := lexer.NewLexer(`foo fooo  123`)
-	l.AddMatcher(func(input []byte) (matched bool, shift int, tokenName interface{}, tokenText []byte) {
-		re := regexp.MustCompile(`^fo+`)
-		match := re.Find(input)
-		if match == nil {
-			return
-		}
-		return true, len(match), "TEST", match
-	})
-	l.AddMatcher(lexer.TokenizeIfMatches(`^\d+`, "DIGIT"))
-	l.AddMatcher(lexer.SkipIfMatches(`\s+`))
-
-	assert.True(l.Scan())
-	assert.Equal(l.Token().Name, "TEST")
-	assert.Equal(l.Token().Text, []byte("foo"))
-	assert.NoError(l.Error)
-
-	assert.True(l.Scan())
-	assert.Equal(l.Token().Name, "TEST")
-	assert.Equal(l.Token().Text, []byte("fooo"))
-	assert.NoError(l.Error)
-
-	assert.True(l.Scan())
-	assert.Equal(l.Token().Name, "DIGIT")
-	assert.Equal(l.Token().Text, []byte("123"))
-	assert.NoError(l.Error)
-
-	assert.False(l.Scan())
-	assert.NoError(l.Error)
+	for _, example := range d {
+		RunTableTests(t, example)
+	}
 }
 
-func TestLexer_Scan2(t *testing.T) {
-	assert := assert.New(t)
-	text := `price $12.4 foo`
-	l := lexer.NewLexerWithMatchers(text, []lexer.TokenMatcher{
-		lexer.TokenizeIfMatches(`\w+`, "WORD"),
-		lexer.SkipIfMatches(`\s+`),
-	})
-	l.AddMatcher(func(input []byte) (matched bool, shift int, tokenName interface{}, tokenText []byte) {
-		re := regexp.MustCompile(`^\$(\d+(?:\.\d+))`)
-		match := re.FindSubmatch(input)
-		if match == nil {
-			return
+func RunTableTests(t *testing.T, data testData) {
+	t.Run(data.text, func(t *testing.T) {
+		assert := assert.New(t)
+		l := lexer.NewLexer(data.text)
+		for _, matcher := range data.matchers {
+			l.AddMatcher(matcher)
 		}
-		return true, len(match[0]), "PRICE", match[1]
+		for _, token := range data.tokens {
+			assert.True(l.Scan())
+			assert.Equal(l.Token().Name.(string), token[1])
+			assert.Equal(string(l.Token().Text), token[0])
+		}
+		assert.False(l.Scan()) // No more tokens
+		assert.NoError(l.Error)
 	})
-
-	assert.True(l.Scan())
-	assert.Equal(l.Token().Name, "WORD")
-	assert.Equal(l.Token().Text, []byte("price"))
-	assert.NoError(l.Error)
-
-	assert.True(l.Scan())
-	assert.Equal(l.Token().Name, "PRICE")
-	assert.Equal(l.Token().Text, []byte("12.4"))
-	assert.NoError(l.Error)
-
-	assert.True(l.Scan())
-	assert.Equal(l.Token().Name, "WORD")
-	assert.Equal(l.Token().Text, []byte("foo"))
-	assert.NoError(l.Error)
-
-	assert.False(l.Scan())
-	assert.Nil(l.Token())
-	assert.NoError(l.Error)
 }
 
 func TestLexer_ScanWithError(t *testing.T) {
