@@ -138,6 +138,10 @@ func ExampleNewLexer() {
 	for l.Scan() {
 		fmt.Printf("%s => %s", l.Token().Name, l.Token().Text)
 	}
+
+	// Output:
+	// WORD => price
+	// PRICE => 12
 }
 
 // Using custom matcher to parse the cost and drop the $ sign.
@@ -160,4 +164,8 @@ func ExampleNewLexerWithMatchers() {
 	for l.Scan() {
 		fmt.Printf("%s => %s\n", l.Token().Name, l.Token().Text)
 	}
+
+	// Output:
+	// WORD => price
+	// PRICE => 12.4
 }
