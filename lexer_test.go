@@ -131,12 +131,12 @@ func TestLexer_ScanWithError(t *testing.T) {
 func ExampleNewLexer() {
 	text := `price 12`
 	l := lexer.NewLexer(text)
-	l.AddMatcher(lexer.TokenizeIfMatches(`\w+`, "WORD"))
+	l.AddMatcher(lexer.TokenizeIfMatches(`[a-z]+`, "WORD"))
 	l.AddMatcher(lexer.SkipIfMatches(`\s+`))
 	l.AddMatcher(lexer.TokenizeIfMatches(`\d+`, "PRICE"))
 
 	for l.Scan() {
-		fmt.Printf("%s => %s", l.Token().Name, l.Token().Text)
+		fmt.Printf("%s => %s\n", l.Token().Name, l.Token().Text)
 	}
 
 	// Output:

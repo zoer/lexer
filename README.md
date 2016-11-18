@@ -11,12 +11,12 @@ Lexer is a simple text tokenizer.
 Simple example:
 ```go
 l := lexer.NewLexer(`price 12`)
-l.AddMatcher(lexer.TokenizeIfMatches(`\w+`, "WORD"))
+l.AddMatcher(lexer.TokenizeIfMatches(`[a-z]+`, "WORD"))
 l.AddMatcher(lexer.SkipIfMatches(`\s+`))
 l.AddMatcher(lexer.TokenizeIfMatches(`\d+`, "PRICE"))
 
 for l.Scan() {
-    fmt.Printf("%s => %s", l.Token().Name, l.Token().Text)
+    fmt.Printf("%s => %s\n", l.Token().Name, l.Token().Text)
 }
 // prints:
 // WORD => price

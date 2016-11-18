@@ -35,7 +35,7 @@ func NewLexer(text string) *Lexer {
 //   text := `text which need to be tokenized`
 //   l := NewLexerWithMatchers(text, []TokenMatchers{
 //     TokenizeIfMatches(`\d+`, "DIGIT")
-//     SipIfMatches(`\s+`)
+//     SkipIfMatches(`\s+`)
 //   })
 func NewLexerWithMatchers(text string, matchers []TokenMatcher) *Lexer {
 	l := NewLexer(text)
@@ -54,7 +54,7 @@ func NewToken(name interface{}, text []byte) *Token {
 //
 //   l := NewLexer(`some text`)
 //   l.AddMatcher(TokenizeIfMatches(`\d+`, "DIGIT"))
-//   l.AddMatcher(SipIfMatches(`\s+`))
+//   l.AddMatcher(SkipIfMatches(`\s+`))
 func (l *Lexer) AddMatcher(fn TokenMatcher) {
 	l.Matchers = append(l.Matchers, fn)
 }
